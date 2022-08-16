@@ -1,0 +1,55 @@
+---
+title: "daily-mail-scraper"
+author: "Sofia Lai"
+date: "12/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.dailymail.co.uk",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+base_link_daily_mail <- "https://www.dailymail.co.uk/home/sitemaparchive/day_" 
+dates_daily_mail <- seq(dmy('01-07-2021'), dmy('13-11-2021'), by = 'days') %>% 
+  lapply(sub, pattern = "-", replacement = "") %>% 
+  lapply(sub, pattern = "-", replacement = "")
+
+dates_daily_mail
+
+links_daily_mail <- paste0(base_link_daily_mail, dates_daily_mail, ".html")
+
+daily_mail_scraper <- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all('//*[contains(concat( " ", @class, " " ), concat( " ", "link-box", " " ))]//a') %>%
+  html_text() 
+  }
+
+headlines_daily_mail <- map(links_daily_mail, daily_mail_scraper) %>% 
+  unlist() %>% 
+  as.data.frame()
+
+write.table(headlines_daily_mail, "./daily_mail_headlines.csv", row.names = FALSE)
+
+
+```
+

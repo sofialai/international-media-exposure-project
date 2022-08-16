@@ -1,0 +1,13 @@
+name: frequency-country-mentions-by-media-sources
+title: frequency-country-mentions-by-media-sources
+username:
+account: sofialai
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5348483
+bundleId: 5394492
+url: https://sofialai.shinyapps.io/frequency-country-mentions-by-media-sources/
+when: 1640026259.40766
+lastSyncTime: 1640026259.40767
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,0 +1,68 @@
+---
+title: "times-scraper"
+author: "Sofia Lai"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate,
+               RSelenium)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.thetimes.co.uk/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+base_link_times <- "https://www.thetimes.co.uk/past-six-days/"
+list_of_days_times <- seq(dmy('07-12-2021'), dmy('09-12-2021'), by = 'days')
+list_of_links_times <- paste0(base_link_times, list_of_days_times, "/news")
+
+remDr <- rsDriver(browser = "chrome",  chromever = "96.0.4664.45")
+rD <- remDr[['client']]
+
+
+times_scraper <- function(x) {
+  rD$navigate(x)
+  load_more <- rD$findElement(
+    using = "css selector",
+    '#main-container > div > div.ButtonContainer.ButtonContainer--spaced.js-buttonContainer > button'
+  )
+  for (i in 1:4) {
+    print(i)
+    load_more$clickElement()
+    Sys.sleep(5)
+  }
+  page_source <- rD$getPageSource() 
+ 
+  Sys.sleep(5)
+}
+
+page_source <- rD$getPageSource()
+
+try <- map(list_of_links_times, times_scraper)
+
+ headlines <- read_html(page_source[[1]]) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//a[contains(@class, 'js-tracking')]") %>%
+  html_text() 
+  
+
+remDr$server$stop()
+```
+

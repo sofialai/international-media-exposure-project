@@ -1,0 +1,87 @@
+---
+title: "Most mentioned countries (by political orientation)"
+author: "Sofia Lai"
+date: "12/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries 
+```{r}
+pacman::p_load(haven,
+               ggplot2,
+               tidyverse,
+               viridis, 
+               plotly)
+```
+
+Data
+```{r, results = FALSE, message = FALSE}
+setwd("~/Documents/GitHub/Final_Data_Science_Project/News source df's")
+dat <- read_csv("data_set_full.csv") %>%  
+  select(-INCOME_GRP, -count) %>% 
+  mutate(rate = as.numeric(rate)) %>% 
+  rename(Country = ADMIN2) 
+  
+dat_top_rates <-  dat %>% 
+  group_by(Country) %>% 
+  summarise(tot_rate = sum(rate)) %>% 
+  ungroup()
+
+dat <- left_join(dat, dat_top_rates) %>% 
+  arrange(desc(tot_rate)) 
+```
+
+Most mentioned countries by center-right newspapers 
+```{r}
+dat_right <- dat %>% 
+  filter(orientation == "Center right", Country != "Oman") %>% 
+  head(81) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate)) 
+
+dat_right$Country <- factor(dat_right$Country,
+                           levels = c("Hong Kong S.A.R.", "Afghanistan", "France", "Germany", "South Africa", "Japan", "Democratic Republic of the Congo", "Italy", "United States of America", "Russia", "China", "Iran", "Australia", "India", "United Kingdom"))
+
+personal_theme = theme(plot.title =
+                         element_text(hjust = 0.5))
+
+plot_right <- dat_right %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.1, width = .5)  +
+  ggtitle("15 most mentioned countries by center-right leaning newspapers") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option = "rocket", discrete = T) + 
+  coord_flip() + 
+  personal_theme 
+
+ggplotly(plot_right)
+
+```
+Most mentioned countries by center-left newspapers 
+```{r}
+
+dat_left <- dat %>% 
+  filter(orientation == "Center left", Country != "Oman") %>% 
+  head(105) 
+
+dat_left$Country <- factor(dat_left$Country,
+                           levels = c("South Africa", "France", "Germany", "Democratic Republic of the Congo", "Australia", "Japan", "India", "Afghanistan", "Italy", "Russia", "United States of America","Iran", "Hong Kong S.A.R.", "China", "United Kingdom"))
+
+plot_left <- dat_left %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.1,width = .5)  +
+  ggtitle("15 most mentioned countries by center-left leaning newspapers") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") +
+  scale_fill_viridis(discrete = T) +
+  coord_flip() + personal_theme
+
+ggplotly(plot_left)
+
+```
+
+

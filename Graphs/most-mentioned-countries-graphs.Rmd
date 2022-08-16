@@ -1,0 +1,181 @@
+---
+title: "Most mentioned countries (world and by continent)"
+author: "Sofia Lai"
+date: "12/15/2021"
+output: html_document
+---
+
+Libraries 
+```{r}
+pacman::p_load(haven,
+               ggplot2,
+               tidyverse,
+               viridis, 
+               plotly)
+```
+
+Data
+```{r, results = FALSE, message = FALSE}
+setwd("~/Documents/GitHub/Final_Data_Science_Project/News source df's")
+dat <- read_csv("data_set_full.csv") %>% 
+  select(-INCOME_GRP, -count, -orientation) %>% 
+  mutate(rate = as.numeric(rate)) %>% 
+  rename(Country = ADMIN2) 
+
+
+dat_top_rates <-  dat %>% 
+  group_by(Country) %>% 
+  summarise(tot_rate = sum(rate))
+
+dat <- left_join(dat, dat_top_rates) %>% 
+  arrange(desc(tot_rate)) 
+```
+
+World
+```{r}
+
+dat_top_10_world <- dat %>% 
+  head(126) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+personal_theme = theme(plot.title =
+                         element_text(hjust = 0.5))
+
+plot_world <- dat_top_10_world %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5)  +
+  ggtitle("10 most mentioned countries in the world") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", 
+       fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+
+ggplotly(plot_world)
+
+
+```
+
+Asia 
+```{r}
+dat_top_10_asia <- dat %>% 
+  filter(CONTINENT == "Asia", Country != "Oman") %>% 
+  head(115) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_asia <- dat_top_10_asia %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned Asian countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_asia)
+```
+
+Africa 
+```{r}
+dat_top_10_africa <- dat %>% 
+  filter(CONTINENT == "Africa") %>% 
+  head(111) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_africa <- dat_top_10_africa %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned African countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_africa)
+```
+
+Europe
+```{r}
+dat_top_10_europe <- dat %>% 
+  filter(CONTINENT == "Europe") %>% 
+  head(117) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_europe <- dat_top_10_europe %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned European countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_europe)
+```
+
+South America
+```{r}
+dat_top_10_samerica <- dat %>% 
+  filter(CONTINENT == "South America") %>% 
+  head(71) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_samerica <- dat_top_10_samerica %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned South American countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_samerica)
+```
+
+
+North America
+```{r}
+dat_top_10_namerica <- dat %>% 
+  filter(CONTINENT == "North America") %>% 
+  head(95) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_namerica <- dat_top_10_namerica %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned North American countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_namerica)
+```
+
+
+10 most mentioned countries in Oceania 
+```{r}
+dat_top_10_oceania <- dat %>% 
+  filter(CONTINENT == "Oceania") %>% 
+  head(75) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate)) 
+
+plot_oceania<- dat_top_10_oceania %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned Oceanian countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_oceania)
+```

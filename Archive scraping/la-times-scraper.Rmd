@@ -1,0 +1,58 @@
+---
+title: "la-times-scraper"
+author: "Sofia Lai"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.latimes.com/sitemap/2021/11",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+base_link_la_times <- "https://www.latimes.com/sitemap/"
+
+dates_la_times <- paste0("2021/", seq(6, 12, by = 1))
+pages_la_times <- seq(1:10)
+
+dates_la_times
+links_months_la_times <- paste0(base_link_la_times, dates_la_times, "/p/")
+
+merge_links <- expand.grid(links_months_la_times, pages_la_times)
+
+links_la_times <- paste0(merge_links$Var1, merge_links$Var2)
+
+
+scraper_la_times<- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//a[contains(@class, 'link')]") %>%
+  html_text() 
+}
+
+headlines_la_times <- map(links_la_times, scraper_la_times) %>% 
+  unlist() %>% 
+  as.data.frame()
+
+
+write.table(headlines_la_times, "./la_times_headlines.csv", row.names = FALSE)
+```
+

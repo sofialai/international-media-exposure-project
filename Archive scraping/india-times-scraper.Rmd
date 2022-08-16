@@ -1,0 +1,79 @@
+---
+title: "india-times-scraper"
+author: "Sofia Lai"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate, 
+               dplyr, 
+               progress)
+```
+
+Polite scraping 
+```{r}
+bow("https://timesofindia.indiatimes.com/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper
+```{r}
+base_link_india_times <- "https://timesofindia.indiatimes.com/"
+
+dates_india_times <- seq(dmy('01/09/2021'), dmy('08/12/2021'), by = 'days')
+dates_india_times <- format(as.Date(dates_india_times, '%Y-%m-%d'), "%Y/%m/%d") %>% 
+  as.data.frame() 
+
+dates_india_times <- dates_india_times %>% 
+  rename(date = ".") %>% 
+  lapply(sub, pattern = "/0", replacement = "/") %>% 
+  as.data.frame() %>% 
+  separate(date, sep = "/", into = c("year", "month", "day")) %>% 
+  mutate(months = month)  %>% 
+  mutate(date = paste0(year,"/", month,"/", day))
+         
+ 
+numbers <- seq(44440, 44538, by = 1)
+
+  
+links_india_times <- paste0(base_link_india_times, 
+                            dates_india_times$date, 
+                            "/archivelist/year-2021,month-",
+                            dates_india_times$months, 
+                            ",starttime-",
+                            numbers, 
+                            ".cms"
+                            )
+
+
+
+scraper_india_times <- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all('//*[contains(concat( " ", @class, " " ), concat( " ", "cnt", " " ))]//div//td//span//a') %>%
+  html_text() 
+}
+
+
+headlines_india_times <- map(links_india_times, scraper_india_times) %>% 
+  unlist() %>% 
+  as.data.frame()
+
+
+write.table(headlines_india_times, "./india_times_headlines.csv", row.names = FALSE)
+
+
+```
+

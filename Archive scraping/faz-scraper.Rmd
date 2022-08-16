@@ -1,0 +1,90 @@
+---
+title: "faz-scraper"
+author: "Sofia Lai"
+date: "12/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate,
+               RSelenium)
+```
+
+Polite scraping 
+```{r}
+bow("https://fazarchiv.faz.net/faz-portal/faz-archiv?q=&source=&max=10&sort=&offset=10&_ts=1639128688167&DT_from=01.06.2021&DT_to=10.12.2021&timeFilterType=0#hitlist",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+```{r}
+remDr <- rsDriver(browser = "chrome",  chromever = "96.0.4664.45")
+rD <- remDr[['client']]
+
+rD$navigate("https://fazarchiv.faz.net/faz-portal/faz-archiv?q=&source=&max=30&sort=&offset=0&_ts=1639129139697&DT_from=01.06.2021&DT_to=10.12.2021&timeFilterType=0#hitlist")
+links_faz <- c()
+links_faz <- append(links_faz, rD$getCurrentUrl())
+next_page_1 <- rD$findElement(using = "css selector", 
+                          "#f_c6") #this changes from page 2 onward 
+next_page_1$clickElement()
+
+
+#Getting list of links - using Selenium because there is no pattern in the different ULRs for each page! 
+  for (i in 1:138) {
+    print(i)
+    links_faz <- append(links_faz, rD$getCurrentUrl())
+  next_page_2 <- rD$findElement(using = "css selector", 
+                          "#f_c8")
+next_page_2$clickElement() 
+url <- rD$getCurrentUrl() %>% 
+  unlist()
+rD$navigate(url) 
+bow(url,
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+Sys.sleep(30)}
+
+remDr$server$stop()
+
+links_faz <- links_faz %>% unlist()
+
+write.table(links_faz, "./FAZ-URLs.csv", row.names = FALSE)
+
+links_faz <- read_csv("./FAZ-URLs.csv") %>% as.list() %>% unname() %>% unlist()
+
+
+faz_scraper <- function(x) {
+  headlines <- read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all('//a[contains(@href, "#")]') %>%
+  html_text()
+  Sys.sleep(60)
+}
+
+
+headlines_faz <- map(links_faz, faz_scraper) %>% 
+  unlist(headlines_faz) %>% 
+  as.data.frame() 
+
+ headlines_faz <- headlines_faz %>% 
+  rename(headline = ".") 
+
+headlines_faz <- headlines_faz %>% 
+  filter(!str_detect(headline, 'Zeitungsseite'), 
+         !str_detect(headline, 'Artikel'),
+         !str_detect(headline, 'Löschen'))
+
+write.table(headlines_faz, "./FAZ_headlines.csv", row.names = FALSE)
+
+```
+

@@ -1,0 +1,418 @@
+---
+title: "How readers around the world are exposed to foreign news"
+author: "Sofia Lai, Marina Luna, Andrew Wells"
+date: "12/15/2021"
+output: 
+  html_document: 
+    toc: yes
+    toc_float: yes
+---    
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Media is powerful in shaping public opinion and peoples' understanding of events. Foreign news is particularly relevant because it influences readers' level of exposure to areas, ideas and events from other areas of the world that are likely not their lived experiences. By covering news about the other countries, media provides access to information on important events to which readers may not easily relate with their own reality or experience. While globalization and technological changes might have shortened distances and increased access to international information, readers from different countries may be differently exposed to credible coverage of foreign news. 
+
+Readers want to access more reliable information [Reuters Institute Digital Report 2021](https://cmds.ceu.edu/article/2021-06-23/reuters-digital-news-report-2021-covid-19-increases-appetite-trusted-and-reliable). In a context of increasing production of fake news and a global pandemic, accurate and plural news about the events of the world has never been more important. 
+
+At the same time, readers are less interested in foreign news. The Pew Research Center's [2018 News Interest Index](https://www.pewresearch.org/politics/2012/06/06/interest-in-foreign-news-declines/) has shown readers around the world usually follow national and local news more closely than foreign news. The Center's [Spring 2017 Global Attitudes Survey](https://www.pewresearch.org/global/2018/01/11/publics-globally-want-unbiased-news-coverage-but-are-divided-on-whether-their-news-media-deliver/) had also revealed that, while the global median for national and local news is 86% and 78% respectively, the global median for news about other countries is only 57%. While there are many factors that influence why foreign news are not as followed as the national ones, the extent to which media covers news about other countries is a crucial one. 
+
+We created original evidence with the aim of understanding how readers of certain news sources are being exposed to foreign news. We collected and analysed 426,483 front-page headlines from the second half of 2021 from 14 mainstream news outlets based in 7 countries. This report sheds light to differences on how readers from the France, India, Ireland, Germany, New Zealand, United Kingdom and United States of America are exposed to international news coverage.
+
+Our main findings are:
+
+*  Media's political inclination influences which foreign news they cover; 
+*  While some countries are covered by a more balanced variety of media and countries, others only receive attention from specific news sources and specific countries;
+* Regions receive uneven attention from media: Europe, Asia and North America (specifically the US) are the most covered, while Oceania, Africa and South America are disproportionately undercovered through foreign news reporting.
+
+# Explore the data 
+
+### Explore how your country is covered by the media
+
+Through this [interactive dashboard](https://sofialai.shinyapps.io/frequency-country-mentions-by-media-sources/), you can explore how a given country is being covered by the media from the countries analysed in this report. In the dashboard, you will be able to see (i) the number of mentions by news source, (ii) the percentage of mentions by news source, (iii) the average percentage of mentions by news source's political orientation and (iv) the average percentage of mentions by news source's country.
+Please contact the authors should the app not be displayed correctly.
+
+```{r, echo = FALSE}
+knitr::include_app("https://sofialai.shinyapps.io/frequency-country-mentions-by-media-sources/", height = "600 px")
+
+```
+
+### Explore how your media covers the world
+
+Through this [interactive dashboard](https://sofialai.shinyapps.io/countries-mentioned-by-media-sources/), you can explore how each news source analysed in this report is covering the world. You will be able to visualize in the map (i) the number of mentions for each country by a given news  outlet and (ii) the percent of mentions. You will also be able to visualize the plots for (i) the percent of mentions per continent and (ii) the percent of mentions per income group. This dashboard only displays information from the newspapers that were scraped daily from December 1 to 17, 2021 (see methodological note below). 
+Please contact the authors should the app not be displayed correctly.
+
+```{r, echo = FALSE}
+knitr::include_app("https://sofialai.shinyapps.io/countries-mentioned-by-media-sources/", height = "600 px")
+
+```
+
+# What the evidence tells
+
+### Media's political inclination matters
+
+```{r, echo = FALSE, results = FALSE, message = FALSE}
+
+pacman::p_load(haven,
+               ggplot2,
+               tidyverse,
+               viridis, 
+               plotly)
+
+setwd("~/Documents/GitHub/Final_Data_Science_Project/News source df's")
+dat <- read_csv("data_set_full.csv") %>%  
+  select(-INCOME_GRP, -count) %>% 
+  mutate(rate = as.numeric(rate)) %>% 
+  rename(Country = ADMIN2) 
+  
+dat_top_rates <-  dat %>% 
+  group_by(Country) %>% 
+  summarise(tot_rate = sum(rate)) %>% 
+  ungroup()
+
+dat <- left_join(dat, dat_top_rates) %>% 
+  arrange(desc(tot_rate)) 
+
+
+```
+
+The two interactive graphs below reveal the similarities and differences in how right-leaning and left-leaning news sources cover foreign news. The group of 15 most covered countries is the same. United  Kingdom leads both rankings and China appears in both top-five lists. Perhaps surprisingly, United Kingdom and China occupied headlines more than the United States. This could partially be due to the selection of news sources from Ireland, New Zealand and India, which were colonies of the UK and still have strong economic and social ties to the UK. One important difference is that right-leaning news sources cover India and Australia more heavily, while left-leaning news sources give more attention to Hong Kong S.A.R. and United States of America. In sum, while the overall coverage of right-leaning and left-leaning newspapers is similar in the top-15 most covered countries, the composition of the respective top-5 varies greatly. 
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_right <- dat %>% 
+  filter(orientation == "Center right", Country != "Oman") %>% 
+  head(81) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate)) 
+
+dat_right$Country <- factor(dat_right$Country,
+                           levels = c("Hong Kong S.A.R.", "Afghanistan", "France", "Germany", "South Africa", "Japan", "Democratic Republic of the Congo", "Italy", "United States of America", "Russia", "China", "Iran", "Australia", "India", "United Kingdom"))
+
+personal_theme = theme(plot.title =
+                         element_text(hjust = 0.5))
+
+plot_right <- dat_right %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.1, width = .5)  +
+  ggtitle("15 most mentioned countries by center-right leaning newspapers") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option = "rocket", discrete = T) + 
+  coord_flip() + 
+  personal_theme 
+
+ggplotly(plot_right)
+
+
+```
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_left <- dat %>% 
+  filter(orientation == "Center left", Country != "Oman") %>% 
+  head(105) 
+
+dat_left$Country <- factor(dat_left$Country,
+                           levels = c("South Africa", "France", "Germany", "Democratic Republic of the Congo", "Australia", "Japan", "India", "Afghanistan", "Italy", "Russia", "United States of America","Iran", "Hong Kong S.A.R.", "China", "United Kingdom"))
+
+plot_left <- dat_left %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.1,width = .5)  +
+  ggtitle("15 most mentioned countries by center-left leaning newspapers") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") +
+  scale_fill_viridis(discrete = T) +
+  coord_flip() + personal_theme
+
+ggplotly(plot_left)
+
+
+
+```
+
+### Most covered countries: the "usual suspects" and the time-specific trends  
+
+```{r, echo = FALSE, results = FALSE, message = FALSE}
+setwd("~/Documents/GitHub/Final_Data_Science_Project/News source df's")
+dat <- read_csv("data_set_full.csv") %>% 
+  select(-INCOME_GRP, -count, -orientation) %>% 
+  mutate(rate = as.numeric(rate)) %>% 
+  rename(Country = ADMIN2) 
+
+
+dat_top_rates <-  dat %>% 
+  group_by(Country) %>% 
+  summarise(tot_rate = sum(rate))
+
+dat <- left_join(dat, dat_top_rates) %>% 
+  arrange(desc(tot_rate)) 
+```
+
+The top-10 most covered countries covered in the world by the media analysed in this report include "the usual suspects" - UK, China, US and Russia -, as well as the time-specific trends that were occupying headlines in the second half of 2021. The high coverage of news from the UK, China, US and Russia sheds light to potential correlation between high attention from media and political and economical powers. Some hypothesis could be raised about the attention given to particular countries during this period: in the case of Iran, recent diplomatic impasses regarding the nuclear issue; in the case of Australia, the submarine deal; in the case of Japan, the Summer Olympics. By its turn, the presence of Italy in the ranking could be explained by the skewed coverage by its European neighbors in the analysis: UK, Germany and France.   
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_world <- dat %>% 
+  head(126) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+personal_theme = theme(plot.title =
+                         element_text(hjust = 0.5))
+
+plot_world <- dat_top_10_world %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5)  +
+  ggtitle("10 most mentioned countries in the world") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", 
+       fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+
+ggplotly(plot_world)
+
+
+```
+
+### Europe is leading foreign news' headlines
+
+Europe is the most covered continent by the newspapers analysed. The United Kingdom is highly more covered than any other European country. Both UK and Russia are covered by a balanced variety of news sources. As pointed before, the high-ranked position of Italy, ahead of Germany and France, for instance, could might represent a skewness caused by the specific selection of newspapers in this analysis that included sources from other European countries (like UK, France and Germany). If newspapers from all European countries were included in this analysis, it is possible that other European countries - like Germany and France - would be more better positioned in the ranking. 
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_europe <- dat %>% 
+  filter(CONTINENT == "Europe") %>% 
+  head(117) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_europe <- dat_top_10_europe %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned European countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_europe)
+
+
+```
+
+### Asia comes in second in foreign news 
+
+Asian countries are positioned in second in the ranking of foreign news in the newspapers analysed. All top-3 countries - Iran, India and China - represent, by its own, more than 10% of all mentions in the headlines collected. While Iran is covered by a balanced variety of news sources, India is specially covered by three sources - Daily Mail, Fox News and Le Monde -, while China is particularly covered by the British sources - The Guardian and Daily Mail. It is also worth highlighting that Hong Kong S.A.R and Afghanistan are specially covered by the German source Der Spiegel. 
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_asia <- dat %>% 
+  filter(CONTINENT == "Asia", Country != "Oman") %>% 
+  head(115) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_asia <- dat_top_10_asia %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned Asian countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_asia)
+
+```
+
+### North America or simply United States of America?
+
+Within North America, the United States is massively more covered than any other country in the region. In this nomination, North America includes all countries in Central America and Caribbean. The US is particularly reported by Der Spiegel and Daily Mail. Following in a shy second place, Canada is covered particularly by Le Monde and Daily Mail. Mexico, by its turn, is covered by a balanced variety of news sources. Additionally, the US would likely be even more disproportionately covered in foreign news is other North American news outlets, such as those from Canada or Mexico were included in the analysis. 
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_namerica <- dat %>% 
+  filter(CONTINENT == "North America") %>% 
+  head(95) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_namerica <- dat_top_10_namerica %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned North American countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_namerica)
+
+```
+
+### Oceania: Australia in the spotlight
+
+Australia leads the international coverage in Oceania, being particularly covered by its former colonial power UK (Daily Mail and The Guardian) and its neighbor New Zealand (New Zealand Herald and Dominion Post). Second and third places are occupied by New Zealand and Palau, respectively, and both are covered by a balanced variety of news sources. If Australian news outlets had been analyzed, there may have been more coverage given to other Oceania countries, such as New Zealand.
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_oceania <- dat %>% 
+  filter(CONTINENT == "Oceania") %>% 
+  head(75) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate)) 
+
+plot_oceania<- dat_top_10_oceania %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned Oceanian countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_oceania)
+
+
+```
+
+### (Neo)colonial ties in Africa shape coverage trends
+
+On one hand, it is possible to identify that colonial history partially explains the coverage trends in African countries. This can be seen, for instance, in the significant coverage of French newspapers (Figaro and Le Monde) in former colonies: Mali, Niger, Algeria and Morocco as well as the French-speaking Democratic Republic of Congo (colonized by Belgium); and of British newspapers (Daily Mail and The Guardian) towards South Africa, Sierra Leone and Nigeria; as well as US American newspaper (Fox News) towards Liberia. On the other, it is also worth highlighting the expressive coverage of the Democratic Republic of the Congo by Indian newspaper The Hindu. The coverage of African countries seems opportunistic and at least partially self-serving as the Democratic Republic of Congo has been featured due to its wealth of cobalt, a resource necessary for electric vehicle batteries. Additionally, South Africa has been in the spotlight due to the rise of the Omicron Covid-19 variant and countries focusing on the source of this concern.
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_africa <- dat %>% 
+  filter(CONTINENT == "Africa") %>% 
+  head(111) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_africa <- dat_top_10_africa %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned African countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_africa)
+
+```
+ 
+### South America: Brazil in the spotlight
+
+The expressive coverage of headlines about Brazil, specially by European newspapers (Le Monde, Der Spiegel and Daily Mail) might be explained by the particular attention the country gained in the context of climate change and COP-26 in the second half of 2021. Positioned in second place, Colombia is covered by a balanced variety of news sources. In third place, Argentina is specially reported by the Daily Mail. The particular interest of the British newspaper in the Argentinian facts might be explained by continued interest in the historical conflict between the two countries.  
+
+```{r, echo = FALSE, results = TRUE}
+
+dat_top_10_samerica <- dat %>% 
+  filter(CONTINENT == "South America") %>% 
+  head(71) %>% 
+  mutate(Country = fct_reorder(Country, tot_rate))
+
+plot_samerica <- dat_top_10_samerica %>% 
+  ggplot(aes(x = Country, y = rate, fill = source)) + 
+  geom_col(color = "black", size = 0.2, width = .5) +
+  ggtitle("10 most mentioned South American countries") +
+  theme_minimal() +
+  labs(y ="Proportion of country mentions on total headlines (%)", fill = "Source") + 
+  scale_fill_viridis(option ="plasma", discrete = T) + 
+  coord_flip() + 
+  personal_theme
+
+ggplotly(plot_samerica)
+
+```
+ 
+# Methodological note
+
+### Data selection
+
+**Selection of the countries**
+
+The news source countries selected for this analysis were France, India, Ireland, Germany, New Zealand, United Kingdom and United States of America. The initial selection criteria were (i) availability of news sources in English and (ii) geographical and historical variety. We were then able to include non-English sources when we developed coding to identify country mentions in other languages (French and German). 
+
+**Selection of the news sources**
+
+The selection criteria for the news sources were (i) being from mainstream media, (ii) webpages were feasible to scrape and (iii) variety in the political inclination. The variable political inclination was reduced to either center-right or center-left and newspapers were then classified based on the classification [World Press](https://worldpress.org/gateway.htm) as well as on other multiple source commentaries on the political leanings of these sources. The following news sources were chosen for each country:
+
+* France: Le Monde (center-left) and Figaro (center-right) 
+* India: The Hindu (center-left)  and The Times of India (center-right) 
+* Ireland:  The Irish Times (center-left) and Irish Independent (center-right)
+* Germany: Der Spiegel (center-left) and Süddeutsche Zeitung (center-right)   
+* New Zealand: The New Zealand Herald (center-left) and The Dominion Post (center-right)  
+* United Kingdom: The Guardian (center-left) and Daily Mail (center-right)
+* United States of America: LA Times (center-left) and Fox News (center-right)
+
+### Data collection
+
+**Web Scraping**
+
+The headlines were scraped using different methods. The first categorization can be done between (i) headlines that were scraped daily and (ii) headlines that were scraped from an archive. 
+
+**Headlines scraped daily**
+
+* Dominion Post (New Zealand): 513 headlines
+* Fox News (United States): 2,575 headlines
+* Irish Independent (Ireland): 1,784 headlines
+* Le Figaro (France): 4,034 headlines
+* The Irish Times (Ireland): 1,606 headlines
+* The Guardian (United Kingdom): 2,699 headlines
+* The New Zealand Herald (New Zealand): 2,227 headlines 
+
+Static web scraping was performed several times a day, over the period from 01.12.21 to 18.12.21. Daily web scraping was chosen on cases where the newspapers didn't have an easily accessible online archive. This required headlines to be scraped from the newspapers' homepages, which are updated regularly. In total, 15,438 headlines were scraped through our daily scraping. There was an attempt to automate this task, but it resulted unsuccessful. There was additionally an attempt to scrape from the Frankfurter Allgemeine (Germany) and The Times (UK) - which also resulted unsuccessful (see below). 
+
+**Headlines scraped from archive**
+
+Due to differences in the newspapers archives' sizes and in order to collect similar amounts of headlines, the archives' scraping refers to different periods of time: 
+
+* Daily Mail (United Kindgom): 01.07.2021-13.11.2021; 219,932 headlines
+* Der Spiegel (Germany): 01.06.2021-12.12.2021; 23,780 headlines
+* India Times (India): 01.09.2021-08.12.2021: 49,599 headlines
+* Le Monde (France): 08.06.2021-08.12.2021; 7,359 headlines
+* LA Times (United States): 01.06.2021-01.12.2021; 31,216 headlines
+* Süddeutsche Zeitung (Germany): 08.11.2021-08.12.2021; 5,000 headlines
+* The Hindu (India): 01.06.2021-09.12.2021; 74,169 headlines
+
+In total, 411,055 headlines were scraped through our archive scraping. 
+
+**Web scraping**
+
+Most headlines were scraped through static web scraping. In these cases, the general approach has been (i) the creation of a list of URLs for the time period selected; (ii) the creation of a function to scrape the headlines and iterate it over the list of URLs.
+
+An attempt was made to scrape headlines from the Frankfurter Allgemeine Zeitung (Germany) and The Times (UK) using dynamic web scraping methods. For FAZ, it was possible to obtain a list of URLs for the selected time period, however it was not possible to scrape headlines due to a limit in the requests on the server. A similar issue occurred also in the case of The Times. Both scripts are nonetheless included in the repository folder "Archive scraping". 
+
+### Data wrangling
+
+**Data frame**
+
+A long data frame was consolidated based on all headlines collected. We counted the number of mentions for each country in each newspaper by cross-referencing the headlines' texts with a list of countries and selected capitals names (considering capitals are often used to refer to the respective country). We removed the respective country of origin of the newspaper from the count, since it would be national instead of foreign news. Considering the differences in numbers of headlines collected from each newspaper, we created a variable referring to the rate each country was covered by each newspapers, allowing comparisons between the newspapers.
+
+### Data visualization
+
+This analysis aimed to communicate important evidence by creating graphs and map which could illustrate the main findings. Therefore, different graphs were created to showcase comparisons in terms of (i) newspapers' political inclinations, (ii) levels of international coverage among all countries and (iii) levels of international coverage within each continent. The interactive dashboards, by their turns, allow visualizations more focused on (i) the coverage of a specific country and (ii) the coverage of a specific media. 
+
+**Interactive Dashboards**
+
+The two interactive dashboards were build as a shiny application and stored in RStudio's [shinyapps.io](http://shinyapps.io/).
+
+**Interactive Graphs**
+
+The nine interactive graphs were built in RStudio. The interactivity was incorporated with package [plotly](https://plotly.com/). 
+
+### Limitations of the analysis and ways forward 
+
+Our piece of investigation has important limitations to be stated. Firstly, the limited number of 2 newspapers selected from each country prevents a more representative scenario of the mainstream media in the given country. Secondly, the simplistic classification of the political orientation of the newspapers as either "center-left" and "center-right" hinders impedes a more nuanced evidence of the effect of news outlets' political inclination on foreign news. Thirdly, the limited number of countries in the analysis hinders the external validity of the conclusions regarding foreign news' coverage by newspapers of other countries. It would have also been interesting to get additional news sources from the Latin America Caribbean (LAC) region, Africa and Asia - though the latter would pose significant challenges due to linguistic barriers. Finally, the limited period analysed (six months) restrains a more accurate evidence and it potentially skew the results in the extent it may over or under-represent trends in foreign news due to time-context-specific events which could be have been more "diluted" within a wider period of time. 
+
+In this sense, further analysis are welcome to assess how media is exposing its readers to the world. Analysis that take into consideration a wider and therefore more representative selection of newspapers, countries and period of time would enhance internal and external validity. Moreover, other analytical approaches would allow a more profound understanding of international coverage. For instance, beyond counting the mentions to the countries in the headlines, further text analysis could identify how the foreign news are being _framed_, that is, what are the _sentiments_ involved (positive, negative or neutral) of the news and what are the _narratives_ behind them. Furthermore, additional analysis of the inter-media agenda-setting, that is, how newspapers' agendas are being shaped by media from other countries in the context of foreign news would also be welcomed. Finally,further analysis of differences in the level and in the framing international coverage of a specific event, such as a given international conflict, a global health issue or  a political process as an election or a peace agreement, would enhance the understanding on how readers around the world access international news.
+
+

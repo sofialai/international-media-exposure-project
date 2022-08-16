@@ -1,0 +1,118 @@
+---
+title: "Frequency of country mentioned by media sources"
+author: "Sofia Lai, Marina Luna, Andrew Wells"
+date: "12/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(shiny)
+library(shinythemes)
+library(ggplot2)
+library(tidyverse)
+library(plotly)
+
+data_set_full <- read_csv("data_set_full.csv")
+
+ui <- fluidPage(theme = shinytheme("cerulean"),
+                titlePanel("Frequency of country mentioned by media sources"),
+                sidebarLayout(
+                  sidebarPanel(
+                    h5("The plots demonstrate at what frequency the selected country
+                       was mentioned in the headlines of various print news outlets.
+                       These outlets include: two from the UK (Daily Mail and the Guardian),
+                       two from the USA (Fox News and the LA Times), two from France (Figaro and 
+                       Le Monde), two from New Zealand (the Dominion Post and the New 
+                       Zealand Herald), two from Ireland (the Irish Independent and Irish Times)
+                       two from India (the Hindu and the Times of India) and two from Germany
+                       (Der Spiegel and Süddeutsche Zeitung Zeitung)"),
+                    selectInput(inputId = "country",
+                                label = "Choose country",
+                                choices = data_set_full$ADMIN2,
+                                selected = "Aghanistan")),
+                  mainPanel(
+                    tabsetPanel(
+                      tabPanel("Number of mentions by news source", plotOutput("plot1")),
+                      tabPanel("Percentage of mentions by news source", plotOutput("plot2")),
+                      tabPanel("Average percentage of mentions by news orientation", plotOutput("plot3")),
+                      tabPanel("Average percentage of mentions by news source country", plotOutput("plot4"))
+                    )
+                  )
+                ))
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  
+  data1 <- reactive({
+    req(input$country)
+    df <- data_set_full %>% 
+      filter(ADMIN2 %in% input$country) %>% 
+      group_by(source) %>% 
+      summarise(count = sum(count))
+  })
+  
+  output$plot1 <- renderPlot({
+    ggplot(data1(), aes(y = count, x = source)) + geom_bar(fill = "azure3", stat = "sum") + 
+      labs(y= "Total mentions per news source", x = "News source") +
+      scale_x_discrete(guide = guide_axis(angle = 45)) +
+      theme_minimal() + theme(legend.position = "none")
+  })
+  
+  data2 <- reactive({
+    req(input$country)
+    df <- data_set_full %>% 
+      filter(ADMIN2 %in% input$country) %>% 
+      group_by(source) %>% 
+      summarise(rate = sum(rate))
+  })
+  
+  output$plot2 <- renderPlot({
+    ggplot(data2(), aes(y = rate, x = source)) + geom_bar(fill = "#69b3a2", stat = "sum") +
+      labs(y= "Percentage of mentions", x = "News source") +
+      scale_x_discrete(guide = guide_axis(angle = 45)) +
+      theme_minimal() + theme(legend.position = "none")
+    
+  })
+  
+  data3 <- reactive({
+    req(input$country)
+    df <- data_set_full %>% 
+      filter(ADMIN2 %in% input$country) %>% 
+      group_by(orientation) %>% 
+      summarise(rate = mean(rate))
+    
+  })
+  
+  output$plot3 <- renderPlot({
+    ggplot(data3(), aes(y = rate, x = orientation)) + geom_bar(fill = "cornsilk3", stat = "sum") +
+      labs(y= "Average percentage of mentions", x = "News source orientation") +
+      theme_minimal() + theme(legend.position = "none")
+    
+  })
+  
+  data4 <- reactive({
+    req(input$country)
+    df <- data_set_full %>% 
+      filter(ADMIN2 %in% input$country) %>% 
+      group_by(source_country) %>% 
+      summarise(rate = mean(rate))
+    
+  })
+  
+  output$plot4 <- renderPlot({
+    ggplot(data4(), aes(y = rate, x = source_country)) + geom_bar(fill = "magenta4", stat = "sum") +
+      labs(y= "Average percentage of mentions", x = "News source country") +
+      theme_minimal() + theme(legend.position = "none")
+    
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+

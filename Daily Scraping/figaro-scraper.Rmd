@@ -1,0 +1,51 @@
+---
+title: "Le Figaro Scraper"
+author: "Sofia La"
+date: "11/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.lefigaro.fr/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+parsed_figaro <-
+  read_html("https://www.lefigaro.fr/")
+
+
+headlines_figaro <- parsed_figaro %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//h2[contains(@class, 'fig-profile__headline')]") %>%
+  html_text %>% 
+  unique() %>% 
+  tolower() %>% 
+  as.data.frame() 
+
+
+write.table(headlines_figaro, "./figaro_headlines.csv", append = TRUE, row.names = FALSE)
+
+dat_figaro <- read_csv("./figaro_headlines.csv") %>% 
+  unique()
+
+write.table(dat_figaro, "./figaro_headlines.csv", row.names = FALSE)
+
+
+```

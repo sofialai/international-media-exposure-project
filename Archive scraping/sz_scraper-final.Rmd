@@ -1,0 +1,52 @@
+---
+title: "sz-scraper-final"
+author: "Sofia Lai"
+date: "12/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.sueddeutsche.de/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+base_link_sz_1 <- "https://www.sueddeutsche.de/news"
+base_link_sz_2 <- "?search=&sort=date&all%5B%5D=dep&all%5B%5D=typ&all%5B%5D=sys&time=2021-11-01T00%3A00%2F2021-11-15T23%3A59&startDate=08.11.2021&endDate=08.12.2021"
+
+
+seq <- seq(1,100)
+
+list_of_liks_sz <- paste0(base_link_sz_1, "/page/", seq, base_link_sz_2)
+
+scraper_sz <- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//em[contains(@class, 'entrylist__title')]") %>%
+  html_text() 
+}
+
+headlines_sz <- map(list_of_links_sz, scraper_sz) %>% 
+  unlist() %>% 
+  as.data.frame()
+
+write.table(headlines_sz, "./sz_headlines.csv", row.names = FALSE)
+```
+

@@ -1,0 +1,54 @@
+---
+title: "hindu-scraper"
+author: "Sofia Lai"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.thehindu.com/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper
+
+```{r}
+base_link_hindu <- "https://www.thehindu.com/archive/web/"
+dates_hindu <- seq(dmy('01/06/2021'), dmy('09/12/2021'), by = 'days')
+dates_hindu <- format(as.Date(dates_hindu, '%Y-%m-%d'), "%Y/%m/%d")
+
+links_hindu <- paste0(base_link_hindu, dates_hindu, "/")
+
+scraper_hindu <- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all('//*[contains(concat( " ", @class, " " ), concat( " ", "archive-list", " " ))]//a') %>%
+  html_text() 
+}
+
+headlines_hindu <- map(links_hindu, scraper_hindu) %>% 
+  unlist() %>% 
+  as.data.frame() 
+
+
+write.table(headlines_hindu, "./headlines_hindu.csv", row.names = FALSE)
+```
+
+
+

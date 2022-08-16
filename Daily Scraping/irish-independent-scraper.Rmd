@@ -1,0 +1,50 @@
+---
+title: "irish-independent-scraper"
+author: "Sofia La"
+date: "11/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.independent.ie/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+parsed_irish_independent <-
+  read_html("https://www.independent.ie/")
+
+
+headlines_irish_independent <- html_nodes(parsed_irish_independent,
+                             xpath = '//*[contains(concat( " ", @class, " " ), concat( " ", "title2", " " ))]//span') %>% 
+  html_text %>% 
+  unique() %>% 
+  tolower() %>% 
+  as.data.frame()
+
+
+write.table(headlines_irish_independent, "./irish_independent_headlines.csv", append = TRUE, row.names = FALSE)
+
+dat_irish_independent <- read_csv("./irish_independent_headlines.csv") %>% 
+  unique() 
+
+write.table(dat_irish_independent, "./irish_independent_headlines.csv", row.names = FALSE)
+
+
+```

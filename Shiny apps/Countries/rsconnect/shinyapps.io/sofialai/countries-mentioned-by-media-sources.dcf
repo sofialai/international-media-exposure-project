@@ -1,0 +1,13 @@
+name: countries-mentioned-by-media-sources
+title: countries-mentioned-by-media-sources
+username:
+account: sofialai
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5348476
+bundleId: 5392787
+url: https://sofialai.shinyapps.io/countries-mentioned-by-media-sources/
+when: 1639991069.764
+lastSyncTime: 1639991069.76401
+asMultiple: FALSE
+asStatic: FALSE

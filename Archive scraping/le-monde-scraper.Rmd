@@ -1,0 +1,53 @@
+---
+title: "le-monde-scraper"
+author: "Sofia Lai"
+date: "12/6/2021"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               utils,
+               haven, 
+               lubridate)
+```
+
+Polite scraping 
+```{r}
+bow("https://www.lemonde.fr/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper
+```{r}
+base_link_le_monde <- "https://www.lemonde.fr/archives-du-monde/"
+
+list_of_days_le_monde <- seq(dmy('08-06-2021'), dmy('08-12-2021'), by = 'days')
+list_of_days_le_monde <- format(as.Date(list_of_days_le_monde, '%Y-%m-%d'), "%d-%m-%Y")
+
+
+list_of_links_le_monde <- paste0(base_link_le_monde, list_of_days_le_monde, "/")
+
+scraper_le_monde <- function(x) {
+  read_html(x) %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//h3[contains(@class, 'teaser__title')]") %>%
+  html_text() 
+  }
+
+headlines_le_monde <- map(list_of_links_le_monde, scraper_le_monde) %>% 
+  unlist %>% 
+  as.data.frame()
+
+write.table(headlines_le_monde, "./le_monde_headlines.csv", row.names = FALSE)
+
+```
+
+

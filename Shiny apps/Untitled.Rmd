@@ -1,0 +1,141 @@
+---
+title: "Countries mentioned by media sources"
+author: "Sofia Lai, Marina Luna, Andrew Wells"
+date: "12/18/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(shiny)
+library(shinythemes)
+library(tidyverse)
+library(leaflet)
+library(htmlwidgets)
+library(sf)
+
+combined_sources <- readRDS("combined_sources.RDS")
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(theme = shinytheme("cerulean"),
+                titlePanel("Countries mentioned by media sources"),
+                sidebarLayout(
+                  sidebarPanel(
+                    h5("The maps and plots demonstrates international coverage 
+                    through the headlines of the chosen news source between 
+                    the dates of December 01 and December 17, 2021.
+                    News sources include: Dominion Post (New Zealand), Figaro (France), 
+                    Fox News (USA), the Guardian (UK), Irish Independent (Ireland),
+                    Irish Times (Ireland), and New Zealand Harold (New Zealand)"),
+                    selectInput("source",
+                                "Select a news source:",
+                                choices = unique(combined_sources$source)
+                    )
+                  ),
+                  mainPanel(
+                    tabsetPanel(
+                      tabPanel("Number of mentions (Map)", leafletOutput("count")),
+                      tabPanel("Percent of mentions (Map)", leafletOutput("rate")),
+                      tabPanel("Percent of mentions per continent (Plot)", plotOutput("plot1")),
+                      tabPanel("Percent of mentions per income group (Plot)", plotOutput("plot2"))
+                    )
+                  )
+                ))
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  
+  media_source <- reactive({
+    i <- combined_sources %>% filter(source == input$source)
+    return(i)
+  })
+  
+  output$count <- renderLeaflet({
+    pal <- colorBin(palette = "OrRd", 5, domain = combined_sources$count)
+    
+    labels <- sprintf(
+      "<strong>%s</strong><br/>%g Mentions",
+      media_source()$ADMIN2, media_source()$count) %>%
+      lapply(htmltools::HTML)
+    
+    media_source() %>%
+      st_transform(crs = "+init=epsg:4326") %>%
+      leaflet() %>%
+      setView(lng=20 , lat =20, zoom=2) %>%
+      addProviderTiles(provider = "CartoDB.Positron") %>%
+      addPolygons(label = labels,
+                  stroke = FALSE,
+                  smoothFactor = 0.5,
+                  opacity = 1,
+                  fillOpacity = 0.7,
+                  fillColor = ~pal(media_source()$count),
+                  highlightOptions = highlightOptions(weight = 5,
+                                                      fillOpacity = 1,
+                                                      color = "black",
+                                                      opacity = 1,
+                                                      bringToFront = TRUE)) %>%
+      addLegend("topright",
+                pal = pal,
+                values = ~ count,
+                title = "Mentions",
+                opacity = 0.7)
+  })
+  
+  output$rate <- renderLeaflet({
+    pal <- colorBin(palette = "PuBu", 5, domain = combined_sources$rate)
+    
+    labels <- sprintf(
+      "<strong>%s</strong><br/>%g Percent of Headlines",
+      media_source()$ADMIN2, media_source()$rate) %>%
+      lapply(htmltools::HTML)
+    
+    media_source() %>%
+      st_transform(crs = "+init=epsg:4326") %>%
+      leaflet() %>%
+      setView(lng=20 , lat =20, zoom=2) %>%
+      addProviderTiles(provider = "CartoDB.Positron") %>%
+      addPolygons(label = labels,
+                  stroke = FALSE,
+                  smoothFactor = 0.5,
+                  opacity = 1,
+                  fillOpacity = 0.7,
+                  fillColor = ~pal(media_source()$rate),
+                  highlightOptions = highlightOptions(weight = 5,
+                                                      fillOpacity = 1,
+                                                      color = "black",
+                                                      opacity = 1,
+                                                      bringToFront = TRUE)) %>%
+      addLegend("topright",
+                pal = pal,
+                values = ~ rate,
+                title = "Percent of Headlines",
+                opacity = 0.7)
+  })
+  
+  output$plot1 <- renderPlot({
+    ggplot(media_source(), aes(y = rate, x = CONTINENT)) + geom_bar(fill = "cadetblue", stat = "sum") +
+      labs(y= "Percentage of mentions", x = "Continent", 
+           caption = "Plot represents the percentage of news source
+           headlines between December 01 and December 17, 2021
+      mentioning the countries within the given continents.") +
+      theme_minimal() + theme(legend.position = "none") 
+  })
+  
+  output$plot2 <- renderPlot({
+    ggplot(media_source(), aes(y = rate, x = INCOME_GRP)) + geom_bar(fill = "bisque3", stat = "sum") +
+      labs(y= "Percentage of mentions", x = "Country income", 
+           caption = "Plot represents the percentage of news source 
+      headlines between December 01 and December 17, 2021
+      mentioning countries within the given income categories.") +
+      theme_minimal() + theme(legend.position = "none")
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
+```
+

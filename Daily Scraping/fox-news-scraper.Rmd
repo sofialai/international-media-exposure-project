@@ -1,0 +1,48 @@
+---
+title: "Fox News scraper"
+author: "Sofia La"
+date: "11/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Libraries
+```{r}
+pacman::p_load(polite, 
+               rvest,
+               tidyverse,
+               haven, 
+               utils)
+
+```
+
+Polite scraping 
+```{r}
+bow("https://www.foxnews.com/",
+  user_agent = "Sofia Lai - https://github.com/sofialai",
+  delay = 5, force = FALSE, verbose = FALSE)
+```
+
+Scraper 
+```{r}
+parsed_fox_news <- read_html("https://www.foxnews.com/") 
+
+headlines_fox_news <- parsed_fox_news %>% 
+  rvest::html_nodes('body') %>%
+  xml2::xml_find_all("//h2[contains(@class, 'title title-color-default')]") %>%
+  html_text %>% 
+  unique() %>% 
+  tolower() %>% 
+  as.data.frame()
+
+write.table(headlines_fox_news, "./fox_news_headlines.csv", append = TRUE, row.names = FALSE)
+
+dat_fox_news <- read_csv("./fox_news_headlines.csv") %>% 
+  unique() 
+
+write.table(dat_fox_news, "./fox_news_headlines.csv", row.names = FALSE)
+```
+
