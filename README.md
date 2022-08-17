@@ -4,7 +4,8 @@
 ## Summary
 
 This repository provides the final data journalism piece and all the codes used behind for the data science project *World Media's International Coverage*, which is part of the evaluation for the completion of the course [Introduction to Data Science](https://github.com/intro-to-data-science-21) taught by Simon Munzert at the Hertie School, Berlin, in Fall 2021. This project was developed by [Sofia  Lai](https://github.com/sofialai), [Andrew Wells](https://github.com/andrewwells991) and [Marina Luna](https://github.com/marinaluna-hertie). 
-##Disclaimer 
+
+## Disclaimer 
 The final project is available as html page: "Lai-Luna-Wells-final-project.html". Please download the file to visualize it. 
 
 ## Description of the folders 
