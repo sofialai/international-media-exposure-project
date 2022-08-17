@@ -43,7 +43,7 @@ This repository provides the final data journalism piece and all the codes used 
 
 8. "data_set_full.csv" is the full data frame used for the analysis. 
 
-9. The final project is available as html: 
+9. The final project is available as html: "Lai-Luna-Wells-final-project.html". Please download the file to visualize it. 
 
 ## License
 
